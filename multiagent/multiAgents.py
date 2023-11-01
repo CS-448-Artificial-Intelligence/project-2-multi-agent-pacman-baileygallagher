@@ -51,6 +51,68 @@ class ReflexAgent(Agent):
 
         return legalMoves[chosenIndex]
 
+    def closestGhostDistance(self, currentGameState, action):
+        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        newPos = successorGameState.getPacmanPosition()
+        newGhostStates = successorGameState.getGhostStates()
+        ghosts = successorGameState.getGhostPosition()
+        if ghosts.isEmpty():
+            return 0
+        ghostPos = newGhostStates[0]
+        pacmanPos = newPos
+        return util.manhattanDistance(pacmanPos, ghostPos)
+    def closestFoodDistance(self, currentGameState, action):
+        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        newFood = successorGameState.getFood()
+        pacPos = successorGameState.getPacmanPosition()
+        minDistance = float('inf')
+        foodDistance = 1
+        for x in range(newFood.width):
+            #currentRow = newFood[x]
+            int_x = int(x)
+            for y in range(newFood.height):
+                int_y = int(y)
+                #currentPosition = currentRow[y]
+                if newFood[x][y] is True:
+                    positionTuple = (int_x, int_y)
+                   # foodDistance = float(util.manhattanDistance(pacPos, positionTuple))
+
+                    foodDistance = abs(pacPos[0] - int_x) + abs(pacPos[1] - int_y)
+                    if float(foodDistance) < minDistance:
+                        minDistance = foodDistance
+
+        return minDistance
+    # should be similar logic for closest ghost and capsules once food works
+
+    '''def closestCapsules(self, currentGameState, action):
+        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        newCap = successorGameState.getCapsules()
+        pacPos = successorGameState.getPacmanPosition()
+        minDistance = float('inf')
+        capDistance = 1
+        for x in range(newCap.width):
+            # currentRow = newFood[x]
+            int_x = int(x)
+            for y in range(newCap.height):
+                int_y = int(y)
+                # currentPosition = currentRow[y]
+                if newCap[x][y] is True:
+                    positionTuple = (int_x, int_y)
+                    # capDistance = float(util.manhattanDistance(pacPos, positionTuple))
+
+                    capDistance = abs(pacPos[0] - int_x) + abs(pacPos[1] - int_y)
+                    if float(capDistance) < minDistance:
+                        minDistance = capDistance
+
+        return minDistance'''
+
+    def numGhosts(self, currentGameState, action):
+        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        number = successorGameState.getGhostPositions()
+        return len(number)
+
+
+
     def evaluationFunction(self, currentGameState, action):
         """
         Design a better evaluation function here.
@@ -72,9 +134,17 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-
+        print(newScaredTimes)
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        numFood = successorGameState.getNumFood()
+        ghosts = successorGameState.getGhostPositions()
+        numGhosts = self.numGhosts(currentGameState, action)
+        closestFood = self.closestFoodDistance(currentGameState, action)
+        #numCapsules = self.closestCapsules(currentGameState, action)
+        score = 0
+        score = (numFood / numGhosts) / (newScaredTimes[0] + 1)
+        return score
+
 
 def scoreEvaluationFunction(currentGameState):
     """
