@@ -188,12 +188,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
         result_action = None
         for current_action in gameState.getLegalActions(turn):
             nextState = gameState.generateSuccessor(turn, current_action)
+            # change here for alpha beta
             nextValueAction = self.calculateMin(nextState, turn + 1, current_depth)
             nextValue = nextValueAction[0]
             if nextValue > value:
+                # making next value our new MAX, updating our action to go along with new MAX
                 value = nextValue
                 result_action = current_action
-
+        # returning max value and its corresponding action
         return (value, result_action)
 
     def calculateMin(self, gameState, turn, current_depth):
@@ -253,18 +255,97 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     Your minimax agent with alpha-beta pruning (question 3)
     """
 
+    # add parameters (alpha, beta)
+    def calculateMax(self, gameState, turn, current_depth, alpha, beta):
+
+        if gameState.isWin() or gameState.isLose() or current_depth == self.depth:
+            return (self.evaluationFunction(gameState), None)
+
+        value = float("-inf")
+        result_action = None
+        for current_action in gameState.getLegalActions(turn):
+            nextState = gameState.generateSuccessor(turn, current_action)
+            # change here for alpha beta, add params alpha beta
+            # NextValue = v
+            nextValueAction = self.calculateMin(nextState, turn + 1, current_depth, alpha, beta)
+            nextValue = nextValueAction[0]
+            if nextValue > value:
+                # making next value our new MAX, updating our action to go along with new MAX
+                value = nextValue
+                result_action = current_action
+            # if value > = beta, return value, current action IE PRUNE the other children
+            # reassign alpha = max(alpha,value)
+            if value > beta:
+                return (value, result_action)
+            alpha = max(alpha, value)
+        # returning max value and its corresponding action
+        return (value, result_action)
+
+    def calculateMin(self, gameState, turn, current_depth, alpha, beta):
+        if gameState.isWin() or gameState.isLose():
+            return (self.evaluationFunction(gameState), None)
+
+        value = float("inf")
+        result_action = None
+        for current_action in gameState.getLegalActions(turn):
+            nextState = gameState.generateSuccessor(turn, current_action)
+
+            # Pacman's turn is next
+            if turn == gameState.getNumAgents() - 1:
+                nextValueAction = self.calculateMax(nextState, 0, current_depth + 1, alpha, beta)
+            else:
+                # A ghost is up next
+                nextValueAction = self.calculateMin(nextState, turn + 1, current_depth, alpha, beta)
+
+            nextValue = nextValueAction[0]
+            if nextValue < value:
+                value = nextValue
+                result_action = current_action
+            if value < alpha:
+                return (value, result_action)
+            beta = min(beta, value)
+
+        return (value, result_action)
+
     def getAction(self, gameState):
         """
-        Returns the minimax action using self.depth and self.evaluationFunction
+        Returns the minimax action from the current gameState using self.depth
+        and self.evaluationFunction.
+
+        Here are some method calls that might be useful when implementing minimax.
+
+        gameState.getLegalActions(agentIndex):
+        Returns a list of legal actions for an agent
+        agentIndex=0 means Pacman, ghosts are >= 1
+
+        gameState.generateSuccessor(agentIndex, action):
+        Returns the successor game state after an agent takes an action
+
+        gameState.getNumAgents():
+        Returns the total number of agents in the game
+
+        gameState.isWin():
+        Returns whether or not the game state is a winning state
+
+        gameState.isLose():
+        Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # turn is 0 (pacman) or turn is greater than 0 (opponent/ghosts)
+        pacman_turn = 0
+        starting_depth = 0
+        alpha = float("-inf")
+        beta = float("inf")
+        return self.calculateMax(gameState, pacman_turn, starting_depth, alpha, beta)[1]
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
-
+    # keep max the same as minimax, modify min function to calculate expected value instead
+    # think you take probability as uniformly at random so like length of successor list = 4, divide all expected values
+    # by four to get weighted avg. keep get action the same as minimax too
     def getAction(self, gameState):
         """
         Returns the expectimax action using self.depth and self.evaluationFunction
