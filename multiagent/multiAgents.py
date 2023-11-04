@@ -354,7 +354,51 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        pacman_turn = 0
+        starting_depth = 0
+        return self.calculateMax(gameState, pacman_turn, starting_depth)[1]
+
+    def calculateMax(self, gameState, turn, current_depth):
+        if gameState.isWin() or gameState.isLose() or current_depth == self.depth:
+            return (self.evaluationFunction(gameState), None)
+
+        value = float("-inf")
+        result_action = None
+        for current_action in gameState.getLegalActions(turn):
+            nextState = gameState.generateSuccessor(turn, current_action)
+            # change here for alpha beta
+            nextValueAction = self.calculateExp(nextState, turn + 1, current_depth)
+            nextValue = nextValueAction[0]
+            if nextValue > value:
+                # making next value our new MAX, updating our action to go along with new MAX
+                value = nextValue
+                result_action = current_action
+        # returning max value and its corresponding action
+        return (value, result_action)
+
+    def calculateExp(self, gameState, turn, current_depth):
+        if gameState.isWin() or gameState.isLose():
+            return (self.evaluationFunction(gameState), None)
+
+        result_action = None
+        # finding number to divide by for probability average
+        num_options = len(gameState.getLegalActions(turn))
+        value = 0
+        for current_action in gameState.getLegalActions(turn):
+            nextState = gameState.generateSuccessor(turn, current_action)
+
+            # Pacman's turn is next
+            if turn == gameState.getNumAgents() - 1:
+                nextValueAction = self.calculateMax(nextState, 0, current_depth + 1)
+            else:
+                # A ghost is up next
+                nextValueAction = self.calculateExp(nextState, turn + 1, current_depth)
+
+            nextValue = nextValueAction[0]
+            probability = 1 / num_options
+            value += probability * nextValue
+            result_action = current_action
+        return (value, result_action)
 
 def betterEvaluationFunction(currentGameState):
     """
