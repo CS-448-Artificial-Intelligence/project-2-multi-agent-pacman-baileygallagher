@@ -51,64 +51,43 @@ class ReflexAgent(Agent):
 
         return legalMoves[chosenIndex]
 
-    def closestGhostDistance(self, currentGameState, action):
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
-        newPos = successorGameState.getPacmanPosition()
-        newGhostStates = successorGameState.getGhostStates()
-        ghosts = successorGameState.getGhostPosition()
-        if ghosts.isEmpty():
+    def closestGhostDistance(self, currentGameState):
+        newPos = currentGameState.getPacmanPosition()
+        newGhostStates = currentGameState.getGhostStates()
+        ghosts = currentGameState.getGhostPositions()
+        if len(ghosts) == 0:
             return 0
-        ghostPos = newGhostStates[0]
+        ghostState = newGhostStates[0]
+        ghostPos = ghostState.configuration.pos
         pacmanPos = newPos
         return util.manhattanDistance(pacmanPos, ghostPos)
-    def closestFoodDistance(self, currentGameState, action):
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
-        newFood = successorGameState.getFood()
-        pacPos = successorGameState.getPacmanPosition()
+
+    def closestFoodDistance(self, currentGameState):
+        newFood = currentGameState.getFood() # .asList()
+        pacPos = currentGameState.getPacmanPosition()
         minDistance = float('inf')
         foodDistance = 1
-        for x in range(newFood.width):
-            #currentRow = newFood[x]
-            int_x = int(x)
-            for y in range(newFood.height):
-                int_y = int(y)
-                #currentPosition = currentRow[y]
-                if newFood[x][y] is True:
-                    positionTuple = (int_x, int_y)
-                   # foodDistance = float(util.manhattanDistance(pacPos, positionTuple))
+        for col in range(newFood.width):
+            # current_column = newFood[col]
+            int_col = int(col)
+            for row in range(newFood.height):
+                int_row = int(row)
 
-                    foodDistance = abs(pacPos[0] - int_x) + abs(pacPos[1] - int_y)
+                 # (col, row)
+                #currentPosition = currentRow[y]
+                if newFood[int_col][int_row]:
+                   # positionTuple = (int_col, int_row)
+                   # foodDistance = float(util.manhattanDistance(pacPos, positionTuple))
+                    pac_x = int(pacPos[0])
+                    pac_y = int(pacPos[1])
+                    foodDistance = abs(pac_x - int_col) + abs(pac_y - int_row)
                     if float(foodDistance) < minDistance:
                         minDistance = foodDistance
 
         return minDistance
-    # should be similar logic for closest ghost and capsules once food works
 
-    '''def closestCapsules(self, currentGameState, action):
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
-        newCap = successorGameState.getCapsules()
-        pacPos = successorGameState.getPacmanPosition()
-        minDistance = float('inf')
-        capDistance = 1
-        for x in range(newCap.width):
-            # currentRow = newFood[x]
-            int_x = int(x)
-            for y in range(newCap.height):
-                int_y = int(y)
-                # currentPosition = currentRow[y]
-                if newCap[x][y] is True:
-                    positionTuple = (int_x, int_y)
-                    # capDistance = float(util.manhattanDistance(pacPos, positionTuple))
-
-                    capDistance = abs(pacPos[0] - int_x) + abs(pacPos[1] - int_y)
-                    if float(capDistance) < minDistance:
-                        minDistance = capDistance
-
-        return minDistance'''
-
-    def numGhosts(self, currentGameState, action):
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
-        number = successorGameState.getGhostPositions()
+    def numGhosts(self, currentGameState):
+        number = currentGameState.getGhostPositions()
         return len(number)
 
 
@@ -134,16 +113,34 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-        print(newScaredTimes)
+        capsules = len(currentGameState.getCapsules())
         "*** YOUR CODE HERE ***"
         numFood = successorGameState.getNumFood()
         ghosts = successorGameState.getGhostPositions()
-        numGhosts = self.numGhosts(currentGameState, action)
-        closestFood = self.closestFoodDistance(currentGameState, action)
-        #numCapsules = self.closestCapsules(currentGameState, action)
-        score = 0
-        score = (numFood / numGhosts) / (newScaredTimes[0] + 1)
+
+        closetGhost = self.closestGhostDistance(successorGameState)
+        successorClosestFood = self.closestFoodDistance(successorGameState)
+        currentClosestFood = self.closestFoodDistance(currentGameState)
+        score = scoreEvaluationFunction(successorGameState)
+
+        food_score = 0
+        if successorClosestFood < currentClosestFood:
+            # make food value worth more if pacman is getting closer to food
+            food_score = 100 * 1 / successorClosestFood
+        else:
+            food_score = 10 * 1 / successorClosestFood
+
+        if numFood == 0:
+            numFood = 1
+        total_food_left = 100 * 1 / numFood
+
+        ghost_score = 0
+        if 4 > closetGhost > 0:
+            ghost_score = -1 * (100 * 1 / closetGhost)
+        #print("FoodScore: %f, GhostScore: %f" % (food_score, ghost_score))
+        score = score + ghost_score + food_score + total_food_left
         return score
+       # return successorGameState.getScore()
 
 
 def scoreEvaluationFunction(currentGameState):
