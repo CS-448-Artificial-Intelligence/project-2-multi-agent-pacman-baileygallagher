@@ -430,36 +430,33 @@ def betterEvaluationFunction(currentGameState):
     if currentGameState.isLose():
         score = float("-inf")
         return score
-    numAgents = currentGameState.getNumAgents()
-    # successorGameState = currentGameState.generatePacmanSuccessor(action)
-    newPos = currentGameState.getPacmanPosition()
-    newFood = currentGameState.getFood()
     newGhostStates = currentGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-    print("NEW SCARED TIMES: ", newScaredTimes)
     "*** YOUR CODE HERE ***"
     numFood = currentGameState.getNumFood()
     closest_cap_distance = closestCapsuleDistance(currentGameState)
     closetGhost = closestGhostDistance(currentGameState)
     currentClosestFood = closestFoodDistance(currentGameState)
     score = scoreEvaluationFunction(currentGameState)
-
+    cap_score = 0
     if closest_cap_distance > currentClosestFood > 0:
         # make food value worth less if pacman is getting closer to cap than food!
-        food_score = 10 * 1 / currentClosestFood
+        food_score = 50 * 1 / currentClosestFood
     else:
         food_score = 100 * 1 / currentClosestFood
 
     if numFood == 0:
         numFood = 1
-    total_food_left = 100 * 1 / numFood
+    total_food_left = 300 * 1 / numFood
 
     ghost_score = 0
     if 4 > closetGhost > 0:
-        ghost_score = -1 * (100 * 1 / closetGhost)
+        ghost_score = -1 * (50 * 1 / closetGhost)
     if newScaredTimes[0] > 0:
         ghost_score = 20
-    score = score + ghost_score + food_score + total_food_left + (5 * (1 / closest_cap_distance))
+    if closest_cap_distance != 0:
+        cap_score = 5 * (1 / closest_cap_distance)
+    score = score + ghost_score + food_score + total_food_left + cap_score
     return score
 
 
